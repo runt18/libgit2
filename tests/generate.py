@@ -18,23 +18,23 @@ class Module(object):
         def _render_callback(self, cb):
             if not cb:
                 return '    { NULL, NULL }'
-            return '    { "%s", &%s }' % (cb['short_name'], cb['symbol'])
+            return '    {{ "{0!s}", &{1!s} }}'.format(cb['short_name'], cb['symbol'])
 
     class DeclarationTemplate(Template):
         def render(self):
-            out = "\n".join("extern %s;" % cb['declaration'] for cb in self.module.callbacks) + "\n"
+            out = "\n".join("extern {0!s};".format(cb['declaration']) for cb in self.module.callbacks) + "\n"
 
             if self.module.initialize:
-                out += "extern %s;\n" % self.module.initialize['declaration']
+                out += "extern {0!s};\n".format(self.module.initialize['declaration'])
 
             if self.module.cleanup:
-                out += "extern %s;\n" % self.module.cleanup['declaration']
+                out += "extern {0!s};\n".format(self.module.cleanup['declaration'])
 
             return out
 
     class CallbacksTemplate(Template):
         def render(self):
-            out = "static const struct clar_func _clar_cb_%s[] = {\n" % self.module.name
+            out = "static const struct clar_func _clar_cb_{0!s}[] = {{\n".format(self.module.name)
             out += ",\n".join(self._render_callback(cb) for cb in self.module.callbacks)
             out += "\n};\n"
             return out
@@ -53,7 +53,7 @@ class Module(object):
                 clean_name = self.module.clean_name(),
                 initialize = self._render_callback(self.module.initialize),
                 cleanup = self._render_callback(self.module.cleanup),
-                cb_ptr = "_clar_cb_%s" % self.module.name,
+                cb_ptr = "_clar_cb_{0!s}".format(self.module.name),
                 cb_count = len(self.module.callbacks),
                 enabled = int(self.module.enabled)
             )
@@ -220,8 +220,8 @@ class TestSuite(object):
 
             data.write(suites)
 
-            data.write("static const size_t _clar_suite_count = %d;\n" % self.suite_count())
-            data.write("static const size_t _clar_callback_count = %d;\n" % self.callback_count())
+            data.write("static const size_t _clar_suite_count = {0:d};\n".format(self.suite_count()))
+            data.write("static const size_t _clar_callback_count = {0:d};\n".format(self.callback_count()))
 
         self.save_cache()
         return True
@@ -240,5 +240,5 @@ if __name__ == '__main__':
         suite.load(options.force)
         suite.disable(options.excluded)
         if suite.write():
-            print("Written `clar.suite` (%d tests in %d suites)" % (suite.callback_count(), suite.suite_count()))
+            print("Written `clar.suite` ({0:d} tests in {1:d} suites)".format(suite.callback_count(), suite.suite_count()))
 
